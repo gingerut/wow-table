@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Web Components with Webpack Starter Kit</title>
+  </head>
+  <body>
+    <h1>Wow Table 🍽</h1>
+    <h4>Used this article as a template: <a href="https://www.robinwieruch.de/web-components-tutorial" target="_blank">🔗</a></h4>
+    <h4>Example CSV files from: <a href="https://people.sc.fsu.edu/~jburkardt/data/csv/csv.html" target="_blank">🔗</a></h4>
+    <button class="btn btn-wide" onclick="document.querySelector('wow-table').setAttribute('file', 'csv/nile.csv');">Change To Nile</button>
+    <button class="btn btn-wide" onclick="document.querySelector('wow-table').setAttribute('file', 'csv/hw_25000.csv');">Change To People</button>
+    <wow-table file="csv/hurricanes.csv"></wow-table>
+    <script src="./bundle.js"></script>
+  </body>
+</html>
