@@ -1,13 +1,15 @@
-# Web Components with Webpack Starter Kit
+# Wow Table 😲
+## A Web Component to auto parse CSV files into HTML Tables
 
-[![Build Status](https://travis-ci.org/rwieruch/web-components-starter-kit.svg?branch=master)](https://travis-ci.org/rwieruch/web-components-starter-kit) [![Slack](https://slack-the-road-to-learn-react.wieruch.com/badge.svg)](https://slack-the-road-to-learn-react.wieruch.com/) [![Greenkeeper badge](https://badges.greenkeeper.io/rwieruch/web-components-starter-kit.svg)](https://greenkeeper.io/)
+I coded this in a fever after being haunted by the idea on the way home from work one day, so excuse the mess!
 
-Starter Kit for Web Components with Webpack as application bundler.
+Basic gist:
+It's a web component! Do web component stuff!
+It goes onto your HTML as `<wow-table></wow-table>`
+You really only need to give it one attribute: `file`
+This is the `src` attribute for the element, and it will download your csv file turn it into JSON and then create a table from that.
 
-## Installation
-
-* `git clone git@github.com:rwieruch/web-components-starter-kit.git`
-* cd web-components-starter-kit
-* npm install
-* npm start
-* visit `http://localhost:8080`
+Todo
+- [ ] also accept JSON object as an optional source
+- [ ] expand on style settings and custom properties
+- [ ] flexbox???

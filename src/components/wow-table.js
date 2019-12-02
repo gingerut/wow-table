@@ -15,8 +15,11 @@ template.innerHTML = `
         --l-ease: cubic-bezier(0, 0.2, 0.8, 1);
         --l-duration: 1s;
         --l-delay: -0.5s;
+        --t-border-radius: 4px;
+        --height: 400px;
+        --width: 400px;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        display:block;
+        display: block;
         margin: .25rem;
     }
     :host * {
@@ -24,10 +27,10 @@ template.innerHTML = `
     }
     .wow--container {
         color: var(--black);
-        position:relative;
+        position: relative;
         background-color: var(--bg);
         border: 3px solid var(--black);
-        border-radius: 4px;
+        border-radius: var(--t-border-radius);
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -57,8 +60,8 @@ template.innerHTML = `
         right: 0;
         bottom: 0;
         left: 0;
-        height: 100%;
-        width: 100%;
+        height: var(--height);
+        width: var(--width);
     }
     .wow--loading__false .wow--loader::after,
     .wow--loading__false .wow--loader {
@@ -113,12 +116,20 @@ class WowTable extends HTMLElement {
         this.file = this.hasAttribute('file') ? this.file : '';
     }
 
+    static get observedAttributes() {
+        return [
+            'file',
+            'json',
+            'styles',
+            'loading',
+        ];
+    }
+
     _getFile(src) {
         return fetch(src);
     }
 
     CSVToJSON(csv, delimiter = ',') {
-        console.log(csv.length);
         csv = csv.split('').map(char => (char === '"' || char === ' ') ? '' : char).join('');
 
         const titles = csv.slice(0, csv.indexOf('\n')).split(delimiter);
@@ -133,10 +144,6 @@ class WowTable extends HTMLElement {
         };
     };
 
-    static get observedAttributes() {
-        return ['file', 'json', 'styles', 'loading'];
-    }
-
     loading(value) {
         this.setAttribute('loading', value);
         value === 'false' ? this.container.classList.add(`wow--loading__false`) : this.container.classList.remove(`wow--loading__false`);
@@ -145,45 +152,102 @@ class WowTable extends HTMLElement {
     attributeChangedCallback(name, oldVal, newVal) {
         if (name === 'file' && newVal !== null) {
             this.setAttribute('loading', true);
-
             this._getFile(newVal)
                 .then(data => data.text())
                 .then(csv => this.CSVToJSON(csv))
                 .then(json => this.buildTable(json))
                 .then(_ => this.loading('false'));
         }
-        if (name === 'styles') {
-
-        }
     }
 
-    make() {
-        return {
-            head: text => `<th class="wow--cell wow--head">${text}</th>`,
-            cell: cell => `<td class="wow--cell">${cell}</td>`
+    _genID(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+    }
+
+    /**
+     * 
+     * @param {Object} config An object with config options: el == element to create; classList == array of classes to apply to element
+     * attr == attributes to apply to element; content == Text content;
+     */
+    buildEl(config) {
+        const { el, classList, attrs, content } = config;
+
+        const domEl = document.createElement(el);
+
+        if (classList !== undefined && typeof classList === 'object') {
+            classList.forEach(className => domEl.classList.add(className));
         }
+
+        if (attrs !== undefined) {
+            for (const attr in attrs) {
+                domEl.setAttribute(attr, attrs[attr]);
+            }
+        }
+
+        if (content !== undefined) {
+            const text = document.createTextNode(content);
+            domEl.appendChild(text);
+        }
+
+        return domEl;
     }
 
     buildTable(json) {
         const { titles, data } = json;
 
-        const template = document.createElement('template');
-
-        template.innerHTML = `
-        <thead class="wow--head">
-            <tr class="wow--row">
-                ${titles.map(this.make().head).join('')}
-            </tr>
-        </thead>
-        <tbody class="wow--body">
-            ${data.map(arr => `
-                    <tr class="wow--row">${arr.map(this.make().cell).join('')}</tr>
-                `).join('')}
-        </tbody>
-        `;
-        const content = template.content.cloneNode(true);
         this.clearTable();
-        this.table.appendChild(content);
+
+        const header = this.buildEl({
+            el: 'thead',
+            classList: ['wow--head'],
+            attrs: {
+                id: `wow--head-${this._genID(3)}`
+            }
+        });
+
+        const hRow = this.buildEl({
+            el: 'tr',
+            classList: ['wow--row']
+        })
+
+        for (const title of titles) {
+            const th = this.buildEl({
+                el: 'th',
+                classList: ['wow--cell', 'wow--head'],
+                content: title
+            })
+            hRow.appendChild(th);
+        }
+
+        header.appendChild(hRow);
+        this.table.appendChild(header);
+
+        const body = this.buildEl({
+            el: 'tbody',
+            classList: ['wow--body'],
+            attrs: {
+                id: `wow--body-${this._genID(3)}`
+            }
+        });
+
+        this.table.appendChild(body)
+
+        console.log(data);
+
+        for (const arr of data) {
+            const bRow = this.buildEl({
+                el: 'tr',
+                classList: ['wow--row']
+            });
+            arr.forEach(cell => bRow.appendChild(
+                this.buildEl({
+                    el: 'td',
+                    classList: ['wow--cell'],
+                    content: cell
+                })
+            ));
+            body.appendChild(bRow);
+        }
     }
 
     clearTable() {
@@ -191,7 +255,6 @@ class WowTable extends HTMLElement {
         for (const child of children) {
             this.table.removeChild(child);
         }
-        //for (children in )
     }
 }
 

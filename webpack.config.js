@@ -6,7 +6,8 @@ module.exports = {
     filename: 'bundle.js'
   },
   devServer: {
-    contentBase: './dist'
+    contentBase: './dist',
+    overlay: true
   },
   module: {
     rules: [
@@ -16,6 +17,15 @@ module.exports = {
           'style-loader',
           'css-loader'
         ]
+      },
+      {
+        test: /worker.js$/,
+        use: {
+          loader: 'worker-loader',
+          options: {
+            inline: true
+          }
+        }
       },
       {
         test: /\.js$/,
