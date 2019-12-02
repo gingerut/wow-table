@@ -12,4 +12,6 @@ This is the `src` attribute for the element, and it will download your csv file 
 Todo
 - [ ] also accept JSON object as an optional source
 - [ ] expand on style settings and custom properties
+- [ ] web worker for extremely large files?
+- [ ] checking for different delimiters (currently only accepts `,`)
 - [ ] flexbox???
