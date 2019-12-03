@@ -258,21 +258,39 @@ class WowTable extends HTMLElement {
         });
 
         this.table.appendChild(body)
+        const csvWidth = data[0].length;
+        console.log(csvWidth);
 
-        for (const arr of data) {
+        for (const row of data) {
             const bRow = this.buildEl({
                 el: 'tr',
                 classList: ['wow--row']
             });
-            arr.forEach(cell => bRow.appendChild(
+
+            const bCells = this.buildCells(row);
+            /*row.forEach(cell => bRow.appendChild(
                 this.buildEl({
                     el: 'td',
                     classList: ['wow--cell'],
                     content: cell
                 })
-            ));
+            ));*/
+            bRow.appendChild(bCells);
             body.appendChild(bRow);
         }
+    }
+
+    buildCells(arr) {
+        const tpl = document.createElement('template');
+        for (const cell of arr) {
+            const domCell = this.buildEl({
+                el: 'td',
+                classList: ['wow--cell'],
+                content: cell,
+            })
+            tpl.appendChild(domCell);
+        }
+        return
     }
 
     clearTable() {
