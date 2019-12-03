@@ -10,7 +10,7 @@ You really only need to give it one attribute: `file`
 This is the `src` attribute for the element, and it will download your csv file turn it into JSON and then create a table from that.
 
 Todo
-- [ ] also accept JSON object as an optional source
+- [ ] also accept JSON object as an optional source (currently turns csv into 2D array so may need to rethink this aspiration)
 - [ ] expand on style settings and custom properties
 - [ ] web worker for extremely large files?
 - [ ] checking for different delimiters (currently only accepts `,`)
