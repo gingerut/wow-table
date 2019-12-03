@@ -148,14 +148,23 @@ class WowTable extends HTMLElement {
     }
 
     attributeChangedCallback(name, oldVal, newVal) {
-        if (name === 'file' && newVal !== null) {
-            this.setAttribute('loading', true);
+        if (newVal === null) return;
+
+        if (name === 'file') {
+            this.loading('true')
             this._getFile(newVal)
                 .then(data => data.text())
                 .then(text => this.checkDelimiter(text))
                 .then(csv => this.CSVToJSON(csv))
-                .then(json => this.buildTable(json.data))
-                .then(_ => this.loading('false'));
+                .then(json => console.log(json) /*this.buildTable(json.data)*/)
+                .then(_ => this.loading('false'))
+        }
+
+        if (name === 'json') {
+            this.loading('true')
+            this.buildTable(newVal)
+                .then(_ => this.loading('false'))
+
         }
     }
 
@@ -246,6 +255,7 @@ class WowTable extends HTMLElement {
 
             body.appendChild(bCells);
         }
+        return new Promise(res => res())
     }
 
     buildHeader(arr) {
