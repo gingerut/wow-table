@@ -1,4 +1,4 @@
-# Wow Table 😲
+# Wow Table 🍽😲
 ## A Web Component to auto-parse CSV files into HTML Tables
 
 I coded this in a fever after being haunted by the idea on the way home from work one day, so excuse the mess!
