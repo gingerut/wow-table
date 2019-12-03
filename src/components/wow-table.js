@@ -165,10 +165,10 @@ class WowTable extends HTMLElement {
     }
 
     checkDelimiter(text) {
-        console.log(text);
         /** Possible delimiters per [this page](https://data-gov.tw.rpi.edu/wiki/CSV_files_use_delimiters_other_than_commas) plus the delimiter that was given as an attribute */
         const possibleDelimiters = [...new Set([',', '\t', ';', '|', '^', this.getAttribute('delimiter')])];
         const usedDelimiters = {};
+
         for (const character of text) {
             if (possibleDelimiters.includes(character)) {
                 if (usedDelimiters[character] === undefined) {
@@ -178,7 +178,7 @@ class WowTable extends HTMLElement {
                 usedDelimiters[character] += 1;
             }
         }
-        console.log(usedDelimiters)
+
         return text;
     }
 
@@ -248,7 +248,6 @@ class WowTable extends HTMLElement {
             }
         }
 
-
         const body = this.buildEl({
             el: 'tbody',
             classList: ['wow--body'],
@@ -258,8 +257,6 @@ class WowTable extends HTMLElement {
         });
 
         this.table.appendChild(body)
-        const csvWidth = data[0].length;
-        console.log(csvWidth);
 
         for (const row of data) {
             const bRow = this.buildEl({
@@ -267,30 +264,24 @@ class WowTable extends HTMLElement {
                 classList: ['wow--row']
             });
 
-            const bCells = this.buildCells(row);
-            /*row.forEach(cell => bRow.appendChild(
-                this.buildEl({
-                    el: 'td',
-                    classList: ['wow--cell'],
-                    content: cell
-                })
-            ));*/
-            bRow.appendChild(bCells);
-            body.appendChild(bRow);
+            const bCells = this.buildCells(row, bRow);
+
+            body.appendChild(bCells);
         }
     }
 
-    buildCells(arr) {
-        const tpl = document.createElement('template');
+    buildCells(arr, parent) {
+
         for (const cell of arr) {
             const domCell = this.buildEl({
                 el: 'td',
                 classList: ['wow--cell'],
                 content: cell,
             })
-            tpl.appendChild(domCell);
+            parent.appendChild(domCell);
         }
-        return
+
+        return parent;
     }
 
     clearTable() {
