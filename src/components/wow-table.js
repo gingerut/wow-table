@@ -112,16 +112,17 @@ class WowTable extends HTMLElement {
         this._shadowRoot.appendChild(template.content.cloneNode(true));
         this.table = this._shadowRoot.querySelector('.wow--table');
         this.container = this._shadowRoot.querySelector('.wow--container');
-        this.json = this.hasAttribute('json') ? this.json : '';
-        this.file = this.hasAttribute('file') ? this.file : '';
+        this.json = this.hasAttribute('json') ? this.getAttribute('json') : '';
+        this.file = this.hasAttribute('file') ? this.getAttribute('file') : '';
     }
 
     static get observedAttributes() {
         return [
             'file',
             'json',
-            'styles',
             'loading',
+            'delimiter',
+            'titles'
         ];
     }
 
@@ -132,14 +133,11 @@ class WowTable extends HTMLElement {
     CSVToJSON(csv, delimiter = ',') {
         csv = csv.split('').map(char => (char === '"' || char === ' ') ? '' : char).join('');
 
-        const titles = csv.slice(0, csv.indexOf('\n')).split(delimiter);
         const data = csv
-            .slice(csv.indexOf('\n') + 1)
             .split('\n')
             .map(v => v.split(delimiter));
 
         return {
-            titles,
             data
         };
     };
@@ -154,14 +152,33 @@ class WowTable extends HTMLElement {
             this.setAttribute('loading', true);
             this._getFile(newVal)
                 .then(data => data.text())
+                .then(text => this.checkDelimiter(text))
                 .then(csv => this.CSVToJSON(csv))
-                .then(json => this.buildTable(json))
+                .then(json => this.buildTable(json.data))
                 .then(_ => this.loading('false'));
         }
     }
 
     _genID(max) {
         return Math.floor(Math.random() * Math.floor(max));
+    }
+
+    checkDelimiter(text) {
+        /** Possible delimiters per [this page](https://data-gov.tw.rpi.edu/wiki/CSV_files_use_delimiters_other_than_commas) plus the delimiter that was given as an attribute */
+        const possibleDelimiters = [...new Set([',', '\t', ';', '|', '^', this.getAttribute('delimiter')])];
+        const usedDelimiters = {};
+
+        for (const character of text) {
+            if (possibleDelimiters.includes(character)) {
+                if (usedDelimiters[character] === undefined) {
+                    usedDelimiters[character] = 1;
+                    continue;
+                }
+                usedDelimiters[character] += 1;
+            }
+        }
+
+        return text;
     }
 
     /**
@@ -174,7 +191,7 @@ class WowTable extends HTMLElement {
 
         const domEl = document.createElement(el);
 
-        if (classList !== undefined && typeof classList === 'object') {
+        if (classList !== undefined) {
             classList.forEach(className => domEl.classList.add(className));
         }
 
@@ -192,11 +209,46 @@ class WowTable extends HTMLElement {
         return domEl;
     }
 
-    buildTable(json) {
-        const { titles, data } = json;
-
+    /**
+     * buildTable
+     * @param {arr} data A 2D array containing the parsed CSV file
+     */
+    buildTable(data) {
         this.clearTable();
 
+        if (this.getAttribute('titles')) {
+
+            /* grab the first array from the data array */
+            /* MUTATES */
+            const firstRow = data.splice(0, 1)[0];
+
+            const header = this.buildHeader(firstRow);
+            this.table.appendChild(header);
+        }
+
+        const body = this.buildEl({
+            el: 'tbody',
+            classList: ['wow--body'],
+            attrs: {
+                id: `wow--body-${this._genID(3)}`
+            }
+        });
+
+        this.table.appendChild(body)
+
+        for (const row of data) {
+            const bRow = this.buildEl({
+                el: 'tr',
+                classList: ['wow--row']
+            });
+
+            const bCells = this.buildCells(row, bRow);
+
+            body.appendChild(bCells);
+        }
+    }
+
+    buildHeader(arr) {
         const header = this.buildEl({
             el: 'thead',
             classList: ['wow--head'],
@@ -210,44 +262,31 @@ class WowTable extends HTMLElement {
             classList: ['wow--row']
         })
 
-        for (const title of titles) {
+        for (const title of arr) {
             const th = this.buildEl({
                 el: 'th',
                 classList: ['wow--cell', 'wow--head'],
                 content: title
             })
+
             hRow.appendChild(th);
+            header.appendChild(hRow);
+        }
+        return header;
+    }
+
+    buildCells(arr, parent) {
+
+        for (const cell of arr) {
+            const domCell = this.buildEl({
+                el: 'td',
+                classList: ['wow--cell'],
+                content: cell,
+            })
+            parent.appendChild(domCell);
         }
 
-        header.appendChild(hRow);
-        this.table.appendChild(header);
-
-        const body = this.buildEl({
-            el: 'tbody',
-            classList: ['wow--body'],
-            attrs: {
-                id: `wow--body-${this._genID(3)}`
-            }
-        });
-
-        this.table.appendChild(body)
-
-        console.log(data);
-
-        for (const arr of data) {
-            const bRow = this.buildEl({
-                el: 'tr',
-                classList: ['wow--row']
-            });
-            arr.forEach(cell => bRow.appendChild(
-                this.buildEl({
-                    el: 'td',
-                    classList: ['wow--cell'],
-                    content: cell
-                })
-            ));
-            body.appendChild(bRow);
-        }
+        return parent;
     }
 
     clearTable() {
