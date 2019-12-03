@@ -223,29 +223,8 @@ class WowTable extends HTMLElement {
             /* MUTATES */
             const firstRow = data.splice(0, 1)[0];
 
-            const header = this.buildEl({
-                el: 'thead',
-                classList: ['wow--head'],
-                attrs: {
-                    id: `wow--head-${this._genID(3)}`
-                }
-            });
-
-            const hRow = this.buildEl({
-                el: 'tr',
-                classList: ['wow--row']
-            })
-
-            for (const title of firstRow) {
-                const th = this.buildEl({
-                    el: 'th',
-                    classList: ['wow--cell', 'wow--head'],
-                    content: title
-                })
-                hRow.appendChild(th);
-                header.appendChild(hRow);
-                this.table.appendChild(header);
-            }
+            const header = this.buildHeader(firstRow);
+            this.table.appendChild(header);
         }
 
         const body = this.buildEl({
@@ -268,6 +247,33 @@ class WowTable extends HTMLElement {
 
             body.appendChild(bCells);
         }
+    }
+
+    buildHeader(arr) {
+        const header = this.buildEl({
+            el: 'thead',
+            classList: ['wow--head'],
+            attrs: {
+                id: `wow--head-${this._genID(3)}`
+            }
+        });
+
+        const hRow = this.buildEl({
+            el: 'tr',
+            classList: ['wow--row']
+        })
+
+        for (const title of arr) {
+            const th = this.buildEl({
+                el: 'th',
+                classList: ['wow--cell', 'wow--head'],
+                content: title
+            })
+
+            hRow.appendChild(th);
+            header.appendChild(hRow);
+        }
+        return header;
     }
 
     buildCells(arr, parent) {
