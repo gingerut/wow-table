@@ -4,103 +4,53 @@ template.innerHTML = `
 <style class="wow--table__styles">
     /* settings */
     :host {
-        --bg: #fff;
-        --bg-hover: #f0f1ff;
-        --black: #040f0f;
-        --l-height: 80px;
-        --l-width: 80px;
-        --l-border-color: #fff;
-        --l-border-width: 4px;
-        --l-border-radius: 50%;
-        --l-ease: cubic-bezier(0, 0.2, 0.8, 1);
-        --l-duration: 1s;
-        --l-delay: -0.5s;
         --t-border-radius: 4px;
-        --height: 400px;
-        --width: 400px;
+        --t-border: var(--t-border-width) var(--t-border-style) var(--t-border-color);
+        --tc-border: var(--tc-border-width) var(--tc-border-style) var(--tc-border-color);
+        --tc-padding: var(--tc-pt) var(--tc-pr) var(--tc-pb) var(--tc-pl);
+        --c-margin: var(--c-mt) var(--c-mr) var(--c-mb) var(--c-ml); 
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         display: block;
-        margin: .25rem;
     }
     :host * {
         box-sizing: border-box;
     }
     .wow--container {
-        color: var(--black);
+        color: var(--color, #040f0f);
+        background-color: var(--bg, #fff);
+        display: var(--c-display, inline-flex);
+        align-items: var(--c-align, center);
+        justify-content: var(--c-justify, center);
         position: relative;
-        background-color: var(--bg);
-        border: 3px solid var(--black);
-        border-radius: var(--t-border-radius);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        visibility: hidden;
+        margin: var(--c-margin, .25rem);
     }
-    /****************/
-    .wow--loader {
-        display: inline-block;
-        position: absolute;
-        width: var(--l-width);
-        height: var(--l-height);
+    .wow--loading__false {
+        visibility: visible;
     }
-    .wow--loader > div {
-        position: absolute;
-        border: var(--l-border-width) solid var(--l-border-color);
-        opacity: 1;
-        border-radius: var(--l-border-radius);
-        animation: lds-ripple var(--l-duration) var(--l-ease) infinite;
-    }
-    .wow--loader > div:nth-child(2) {
-        animation-delay: var(--l-delay);
-    }
-    .wow--loader::after {
-        content: '';
-        position:absolute;
-        background-color: var(--bg);
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        height: var(--height);
-        width: var(--width);
-    }
-    .wow--loading__false .wow--loader::after,
-    .wow--loading__false .wow--loader {
-        content: unset;
-        display: none;
-    }
-    @keyframes lds-ripple {
-        0% {
-            top: 36px;
-            left: 36px;
-            width: 0;
-            height: 0;
-            opacity: 1;
-        }
-        100% {
-            top: 0px;
-            left: 0px;
-            width: 72px;
-            height: 72px;
-            opacity: 0;
-        }
-    }
-
     /****************/
     .wow--table {
-        border-collapse: collapse;
+        border: var(--t-border, 4px solid #000);
+        /**
+         * TODO: Why won't the border radius apply to the table
+         */
+        border-radius: var(--t-border-radius, 4px);
+        border-collapse: var(--t-border-collapse, collapse);
     }
     .wow--cell {
-        border: 1px solid var(--black);
-        text-align: center;
-        font-variant-numeric: tabular-nums;
-        padding: .25rem;
+        border: var(--tc-border, 1px solid #000);
+        text-align: var(--tc-talign, center);
+        font-variant-numeric: var(--tc-font-variant, tabular-nums);
+        padding: var(--tc-padding, .25rem);
     }
-    .wow--body .wow--row:hover {
-        background-color: var(--bg-hover);
+    .wow--heading {
+        text-align: inherit;
+    }
+    .wow--row:hover {
+        background-color: var(--bg-hover, #f0f1ff);
     }
 </style>
 <div class="wow--container">
-    <div class="wow--loader"><div></div><div></div></div>
     <table class="wow--table"></table>
 </div>
 `;
@@ -130,16 +80,14 @@ class WowTable extends HTMLElement {
         return fetch(src);
     }
 
-    CSVToJSON(csv, delimiter = ',') {
-        csv = csv.split('').map(char => (char === '"' || char === ' ') ? '' : char).join('');
+    CSVtoArr(csv, delimiter = ',') {
+        let csvCleaned = csv.split('').map(char => (char === '"' || char === ' ') ? '' : char).join('');
 
-        const data = csv
+        const data = csvCleaned
             .split('\n')
             .map(v => v.split(delimiter));
 
-        return {
-            data
-        };
+        return data;
     };
 
     loading(value) {
@@ -155,8 +103,8 @@ class WowTable extends HTMLElement {
             this._getFile(newVal)
                 .then(data => data.text())
                 .then(text => this.checkDelimiter(text))
-                .then(csv => this.CSVToJSON(csv))
-                .then(json => console.log(json) /*this.buildTable(json.data)*/)
+                .then(csv => this.CSVtoArr(csv))
+                .then(arr => this.buildTable(arr))
                 .then(_ => this.loading('false'))
         }
 
@@ -223,7 +171,17 @@ class WowTable extends HTMLElement {
      * @param {arr} data A 2D array containing the parsed CSV file
      */
     buildTable(data) {
+        console.time('table build start');
         this.clearTable();
+
+        const tpl = document.createDocumentFragment();
+        const body = this.buildEl({
+            el: 'tbody',
+            classList: ['wow--body'],
+            attrs: {
+                id: `wow--body-${this._genID(10)}`
+            }
+        });
 
         if (this.getAttribute('titles')) {
 
@@ -235,16 +193,6 @@ class WowTable extends HTMLElement {
             this.table.appendChild(header);
         }
 
-        const body = this.buildEl({
-            el: 'tbody',
-            classList: ['wow--body'],
-            attrs: {
-                id: `wow--body-${this._genID(3)}`
-            }
-        });
-
-        this.table.appendChild(body)
-
         for (const row of data) {
             const bRow = this.buildEl({
                 el: 'tr',
@@ -255,15 +203,20 @@ class WowTable extends HTMLElement {
 
             body.appendChild(bCells);
         }
+
+        tpl.appendChild(body);
+
+        this.table.appendChild(tpl);
+        console.timeEnd('table build start')
         return new Promise(res => res())
     }
 
     buildHeader(arr) {
         const header = this.buildEl({
             el: 'thead',
-            classList: ['wow--head'],
+            classList: ['wow--header'],
             attrs: {
-                id: `wow--head-${this._genID(3)}`
+                id: `wow--header-${this._genID(10)}`
             }
         });
 
@@ -275,7 +228,7 @@ class WowTable extends HTMLElement {
         for (const title of arr) {
             const th = this.buildEl({
                 el: 'th',
-                classList: ['wow--cell', 'wow--head'],
+                classList: ['wow--cell', 'wow--heading'],
                 content: title
             })
 
@@ -286,7 +239,6 @@ class WowTable extends HTMLElement {
     }
 
     buildCells(arr, parent) {
-
         for (const cell of arr) {
             const domCell = this.buildEl({
                 el: 'td',
